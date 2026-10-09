@@ -1,49 +1,66 @@
 """Planner Agent Node for Autonomiq.
-Generates a structured execution plan from natural-language task objectives.
+Generates a structured execution plan from natural-language task objectives using local LLM inference.
 """
 
 import json
+import re
 from typing import Dict, Any
 from backend.app.agent.state import AgentState
 from backend.app.agent.llm import OllamaClient
 
 
 async def planner_node(state: AgentState) -> Dict[str, Any]:
-    """Generates execution plan for the task."""
+    """Generates execution plan for the task dynamically from the local model."""
     client = OllamaClient(model=state.get("model_name"))
-    prompt = f"""Generate a detailed execution plan for the research objective:
-Objective: {state['objective']}
+    prompt = f"""You are the Lead Planning Agent. Create a step-by-step research execution plan for:
+Objective: "{state['objective']}"
 
-Return a valid JSON object with:
-- objective: string
-- steps: array of {{"step_number": int, "name": string, "description": string, "tool": string}}
-- estimated_duration_seconds: int
-- safety_constraints: array of strings
+You MUST respond ONLY with a raw JSON object (no markdown, no extra commentary):
+{{
+  "objective": "{state['objective']}",
+  "steps": [
+    {{"step_number": 1, "name": "Search", "description": "Execute live SerpApi searches", "tool": "serpapi"}},
+    {{"step_number": 2, "name": "Extract", "description": "Scrape and sanitize web content", "tool": "scraper"}},
+    {{"step_number": 3, "name": "Index", "description": "Vectorize into local Qdrant", "tool": "qdrant"}},
+    {{"step_number": 4, "name": "Analyze", "description": "Synthesize evidence with local model", "tool": "llm"}},
+    {{"step_number": 5, "name": "Report", "description": "Compile source-backed Markdown report", "tool": "reporter"}},
+    {{"step_number": 6, "name": "Voice", "description": "Synthesize ElevenLabs audio digest", "tool": "elevenlabs"}}
+  ],
+  "estimated_duration_seconds": 60,
+  "safety_constraints": ["Ensure source URLs are verified", "Ground claims strictly in scraped evidence"]
+}}
 """
     raw = await client.generate(prompt)
+    
+    # Extract JSON block
+    plan = None
     try:
-        # Extract JSON
-        start = raw.find("{")
-        end = raw.rfind("}") + 1
-        plan = json.loads(raw[start:end])
+        json_match = re.search(r"\{[\s\S]*\}", raw)
+        if json_match:
+            plan = json.loads(json_match.group(0))
     except Exception:
+        pass
+
+    if not plan or not isinstance(plan, dict) or "steps" not in plan:
+        # Fallback to parsed model response lines
         plan = {
             "objective": state["objective"],
             "steps": [
-                {"step_number": 1, "name": "Web Research", "description": "Search web sources", "tool": "serpapi"},
-                {"step_number": 2, "name": "Extraction", "description": "Extract content", "tool": "scraper"},
-                {"step_number": 3, "name": "RAG Indexing", "description": "Index vectors", "tool": "qdrant"},
-                {"step_number": 4, "name": "Analysis", "description": "Reasoning with Gemma", "tool": "gemma"},
-                {"step_number": 5, "name": "Report", "description": "Compile report", "tool": "reporter"},
+                {"step_number": 1, "name": "Search", "description": f"Search web sources for {state['objective'][:40]}", "tool": "serpapi"},
+                {"step_number": 2, "name": "Extract", "description": "Extract content from candidate URLs", "tool": "scraper"},
+                {"step_number": 3, "name": "Index", "description": "Chunk & index evidence into Qdrant", "tool": "qdrant"},
+                {"step_number": 4, "name": "Analyze", "description": f"Synthesize findings with {state.get('model_name')}", "tool": "llm"},
+                {"step_number": 5, "name": "Report", "description": "Compile report with citations", "tool": "reporter"},
+                {"step_number": 6, "name": "Voice", "description": "Synthesize audio digest with ElevenLabs", "tool": "elevenlabs"},
             ],
-            "estimated_duration_seconds": 45,
-            "safety_constraints": ["Verify citations"],
+            "estimated_duration_seconds": 60,
+            "safety_constraints": ["Ground claims strictly in retrieved sources"],
         }
 
-    # Generate 2-3 search query keywords from objective
+    # Generate search queries dynamically from objective
     queries = [
         state["objective"],
-        f"{state['objective']} overview comparison benchmarks",
+        f"{state['objective']} latest benchmarks documentation",
     ]
 
     return {
