@@ -8,34 +8,34 @@ interface NewTaskModalProps {
   onTaskCreated: (task: Task) => void;
 }
 
-const FALLBACK_MODELS: ModelInfo[] = [
-  { id: 'gemma3:1b', name: 'gemma3:1b', size_mb: 815, is_default: true, family: 'gemma' },
-  { id: 'qwen2.5:1.5b', name: 'qwen2.5:1.5b', size_mb: 986, is_default: false, family: 'qwen' },
-  { id: 'qwen3:1.7b', name: 'qwen3:1.7b', size_mb: 1360, is_default: false, family: 'qwen' },
-  { id: 'qwen3:4b', name: 'qwen3:4b', size_mb: 2500, is_default: false, family: 'qwen' },
-];
-
 export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onTaskCreated }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [model, setModel] = useState('gemma3:1b');
-  const [modelsList, setModelsList] = useState<ModelInfo[]>(FALLBACK_MODELS);
+  const [model, setModel] = useState('');
+  const [modelsList, setModelsList] = useState<ModelInfo[]>([]);
   const [autoApprove, setAutoApprove] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [modelsLoading, setModelsLoading] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
+      setModelsLoading(true);
       api.getModels()
         .then((res) => {
           if (res?.models && res.models.length > 0) {
             setModelsList(res.models);
-            if (res.default_model) {
-              setModel(res.default_model);
-            }
+            const defaultM = res.models.find((m) => m.is_default)?.name || res.models[0].name;
+            setModel(defaultM);
+          } else {
+            setModelsList([]);
           }
         })
-        .catch(() => {
-          // Keep FALLBACK_MODELS
+        .catch((err) => {
+          console.error("Failed to fetch live Ollama models", err);
+          setModelsList([]);
+        })
+        .finally(() => {
+          setModelsLoading(false);
         });
     }
   }, [isOpen]);
@@ -44,7 +44,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onT
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description) return;
+    if (!title || !description || !model) return;
 
     setLoading(true);
     try {
@@ -108,7 +108,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onT
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your research question. Autonomiq will search the web, extract data, index in local Qdrant, and synthesize with your local model."
+              placeholder="Describe your research question. Autonomiq will search the web via SerpApi, extract live sources, index into local Qdrant, and synthesize with your Ollama model."
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -123,25 +123,31 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onT
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                Local Model (Detected in Ollama)
+                Local Model ({modelsList.length} detected)
               </label>
-              <select
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '6px',
-                  fontSize: '14px'
-                }}
-              >
-                {modelsList.map((m) => (
-                  <option key={m.id} value={m.name}>
-                    {m.name} {m.size_mb ? `(${m.size_mb >= 1024 ? (m.size_mb / 1024).toFixed(1) + ' GB' : m.size_mb + ' MB'})` : ''} {m.name.includes('gemma') ? '⭐ Recommended' : ''}
-                  </option>
-                ))}
-              </select>
+              {modelsLoading ? (
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', padding: '8px 0' }}>Detecting Ollama models...</div>
+              ) : modelsList.length === 0 ? (
+                <div style={{ fontSize: '12px', color: 'var(--status-error)', padding: '8px 0' }}>No models found in Ollama.</div>
+              ) : (
+                <select
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                    fontSize: '14px'
+                  }}
+                >
+                  {modelsList.map((m) => (
+                    <option key={m.id} value={m.name}>
+                      {m.name} {m.size_mb ? `(${m.size_mb >= 1024 ? (m.size_mb / 1024).toFixed(1) + ' GB' : m.size_mb + ' MB'})` : ''} {m.name.includes('gemma') ? '⭐ Recommended' : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '24px' }}>
@@ -161,7 +167,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onT
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
+            <button type="submit" className="btn btn-primary" disabled={loading || modelsList.length === 0}>
               {loading ? 'Creating...' : 'Launch Task'}
             </button>
           </div>
