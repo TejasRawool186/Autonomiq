@@ -8,8 +8,18 @@ interface TaskMonitorProps {
 }
 
 export const TaskMonitor: React.FC<TaskMonitorProps> = ({ task, onStartClick, onCancelClick }) => {
+  const [elapsed, setElapsed] = React.useState(0);
   const steps = task.steps || [];
   const sources = task.sources || [];
+
+  React.useEffect(() => {
+    if (task.status !== 'running') return;
+    const interval = setInterval(() => {
+      const created = new Date(task.created_at).getTime();
+      setElapsed(Math.max(0, Math.floor((Date.now() - created) / 1000)));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [task.status, task.created_at]);
 
   return (
     <div className="card" style={{ marginBottom: '24px' }}>
@@ -18,6 +28,11 @@ export const TaskMonitor: React.FC<TaskMonitorProps> = ({ task, onStartClick, on
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span className={`badge badge-${task.status}`}>{task.status}</span>
             <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Model: {task.model_name}</span>
+            {task.status === 'running' && (
+              <span style={{ fontSize: '12px', color: 'var(--status-running)', fontWeight: 600 }}>
+                ⏱️ Elapsed: {elapsed}s
+              </span>
+            )}
           </div>
           <h3 style={{ fontSize: '18px', fontWeight: 700 }}>{task.title}</h3>
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '4px' }}>{task.description}</p>
