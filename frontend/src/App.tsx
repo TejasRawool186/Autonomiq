@@ -125,10 +125,12 @@ export const App: React.FC = () => {
             {health && (
               <div className="card" style={{ marginTop: '16px', padding: '14px', fontSize: '12px' }}>
                 <h4 style={{ fontWeight: 600, marginBottom: '8px' }}>Engine Health</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', color: 'var(--text-secondary)' }}>
-                  <div>● LLM: <strong>Gemma (Ollama)</strong></div>
-                  <div>● Qdrant: <strong>{health.qdrant_status}</strong></div>
-                  <div>● Temporal: <strong>{health.temporal_status}</strong></div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', color: 'var(--text-secondary)' }}>
+                  <div>● LLM: <strong style={{ color: health.ollama_connected ? 'var(--accent-green)' : 'var(--status-error)' }}>{health.ollama_connected ? 'Ollama Online' : 'Ollama Offline'}</strong></div>
+                  <div>● Search: <strong style={{ color: 'var(--accent-green)' }}>SerpApi Live</strong></div>
+                  <div>● Voice: <strong style={{ color: health.elevenlabs_enabled ? 'var(--accent-green)' : 'var(--text-secondary)' }}>{health.elevenlabs_enabled ? 'ElevenLabs Active' : 'Offline'}</strong></div>
+                  <div>● Tracing: <strong style={{ color: health.sentry_enabled ? 'var(--accent-green)' : 'var(--text-secondary)' }}>{health.sentry_enabled ? 'Sentry Active' : 'Offline'}</strong></div>
+                  <div>● Vector RAG: <strong style={{ color: 'var(--accent-green)' }}>{health.qdrant_status}</strong></div>
                 </div>
               </div>
             )}
