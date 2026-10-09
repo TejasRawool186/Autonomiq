@@ -6,12 +6,18 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import declarative_base
 from backend.app.config import settings
 
+# Ensure async sqlite driver
+db_url = settings.DATABASE_URL
+if db_url.startswith("sqlite://") and not db_url.startswith("sqlite+aiosqlite://"):
+    db_url = db_url.replace("sqlite://", "sqlite+aiosqlite://", 1)
+
 # Async engine for FastAPI
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    db_url,
     echo=(settings.APP_ENV == "development"),
-    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
+    connect_args={"check_same_thread": False} if "sqlite" in db_url else {},
 )
+
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,

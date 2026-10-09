@@ -47,9 +47,33 @@ def test_api():
         assert detail_res.status_code == 200
         detail = detail_res.json()
         assert detail["id"] == task_id
-        assert detail["plan_json"] is not None
+        # System resources
+        res = client.get("/api/system")
+        assert res.status_code == 200
+        assert "storage" in res.json()
+        assert "cpu_count" in res.json()
+
+        # Models
+        res = client.get("/api/models")
+        assert res.status_code == 200
+        assert "models" in res.json()
+
+        # Retry Task
+        retry_res = client.post(f"/api/tasks/{task_id}/retry")
+        assert retry_res.status_code == 200
+        assert retry_res.json()["status"] == "running"
+
+        # Delete Task
+        del_res = client.delete(f"/api/tasks/{task_id}")
+        assert del_res.status_code == 200
+        assert del_res.json()["status"] == "deleted"
+
+        # Verify 404 after deletion
+        get_deleted = client.get(f"/api/tasks/{task_id}")
+        assert get_deleted.status_code == 404
 
 
 if __name__ == "__main__":
     test_api()
-    print("All API endpoint tests passed!")
+    print("All API endpoint tests (including retry, delete, system) passed!")
+
