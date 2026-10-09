@@ -14,6 +14,7 @@ export const App: React.FC = () => {
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchTasks = async () => {
     try {
@@ -78,15 +79,32 @@ export const App: React.FC = () => {
           {/* Sidebar / Task Library */}
           <div>
             <div className="card" style={{ padding: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <h3 style={{ fontSize: '14px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   Research Tasks
                 </h3>
                 <span className="badge" style={{ backgroundColor: '#e9ecef' }}>{tasks.length}</span>
               </div>
 
+              <input
+                type="text"
+                placeholder="🔍 Search tasks..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '6px 10px',
+                  fontSize: '12px',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '4px',
+                  marginBottom: '12px'
+                }}
+              />
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {tasks.map((t) => (
+                {tasks
+                  .filter((t) => t.title.toLowerCase().includes(searchQuery.toLowerCase()) || t.description.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .map((t) => (
                   <div
                     key={t.id}
                     onClick={() => loadTaskDetails(t.id)}
