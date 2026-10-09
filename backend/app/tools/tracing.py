@@ -1,5 +1,5 @@
 """Sentry Tracing & Telemetry Module for Autonomiq.
-Records agent step execution, LLM call latencies, token counts, and errors.
+Emits live spans and breadcrumbs directly to Sentry and maintains task trace summaries.
 """
 
 import time
@@ -12,7 +12,7 @@ class AgentTracer:
 
     @classmethod
     def init_sentry(cls):
-        """Initializes Sentry SDK if DSN is configured."""
+        """Initializes Sentry SDK with configured DSN."""
         if settings.SENTRY_DSN:
             try:
                 import sentry_sdk
@@ -22,8 +22,8 @@ class AgentTracer:
                     traces_sample_rate=1.0,
                     send_default_pii=False,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[Sentry Init Error] {e}")
 
     @classmethod
     def record_span(
@@ -36,11 +36,11 @@ class AgentTracer:
         status: str = "success",
         metadata: Optional[Dict[str, Any]] = None,
     ):
-        """Record an execution span locally and emit to Sentry if active."""
+        """Record an execution span and send breadcrumb/transaction directly to Sentry."""
         span_data = {
             "step_name": step_name,
             "duration_ms": round(duration_ms, 2),
-            "model": model or "local",
+            "model": model or settings.OLLAMA_MODEL,
             "tokens_used": tokens_used,
             "status": status,
             "timestamp": time.time(),
@@ -50,6 +50,24 @@ class AgentTracer:
         if task_id not in cls._local_spans:
             cls._local_spans[task_id] = []
         cls._local_spans[task_id].append(span_data)
+
+        # Emit to real Sentry
+        if settings.SENTRY_DSN:
+            try:
+                import sentry_sdk
+                sentry_sdk.add_breadcrumb(
+                    category="agent.step",
+                    message=f"Task {task_id}: {step_name} completed in {duration_ms}ms ({status})",
+                    level="info" if status == "success" else "error",
+                    data={
+                        "task_id": task_id,
+                        "model": model,
+                        "tokens_used": tokens_used,
+                        **(metadata or {}),
+                    },
+                )
+            except Exception:
+                pass
 
     @classmethod
     def get_task_trace_summary(cls, task_id: str) -> Dict[str, Any]:
