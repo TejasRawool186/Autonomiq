@@ -1,5 +1,5 @@
 """ElevenLabs Audio Digest Generator for Autonomiq Away Mode.
-Converts research executive summaries into spoken audio files.
+Converts research executive summaries into spoken audio files using ElevenLabs.
 """
 
 from pathlib import Path
@@ -15,12 +15,13 @@ class ElevenLabsVoiceEngine:
         self.voice_id = voice_id or settings.ELEVENLABS_VOICE_ID
 
     async def generate_audio_digest(self, task_id: str, summary_text: str) -> Tuple[Path, str, int]:
-        """Synthesizes text into an MP3 audio file and saves as task artifact."""
-        if self.api_key:
-            audio_bytes = await self._synthesize_elevenlabs(summary_text)
-        else:
-            audio_bytes = self._generate_fallback_audio(summary_text)
+        """Synthesizes text into an MP3 audio file using ElevenLabs and saves as artifact."""
+        if not self.api_key:
+            raise RuntimeError(
+                "ELEVENLABS_API_KEY is not configured. Please set ELEVENLABS_API_KEY in .env"
+            )
 
+        audio_bytes = await self._synthesize_elevenlabs(summary_text)
         filename = "digest.mp3"
         return FileManager.save_artifact(task_id, filename, audio_bytes)
 
@@ -34,17 +35,11 @@ class ElevenLabsVoiceEngine:
         }
         payload = {
             "text": text[:2000],  # Keep digest concise
-            "model_id": "eleven_monolingual_v1",
+            "model_id": "eleven_multilingual_v2",
             "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
         }
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=45.0) as client:
             resp = await client.post(url, headers=headers, json=payload)
             resp.raise_for_status()
             return resp.content
-
-    def _generate_fallback_audio(self, text: str) -> bytes:
-        """Generates a valid lightweight MP3 header/frame for offline test modes."""
-        # Standard silent MP3 frame bytes
-        mp3_silent_frame = b"\xff\xfb\x90\x64\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" * 32
-        return mp3_silent_frame
