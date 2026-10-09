@@ -14,7 +14,7 @@ async def extractor_node(state: AgentState) -> Dict[str, Any]:
 
     for src in sources:
         url = src.get("url")
-        if url and url.startswith("http") and "example.org" not in url:
+        if url and (url.startswith("http://") or url.startswith("https://")):
             extracted = await WebScraper.scrape_url(url)
             if extracted.get("content"):
                 src["content"] = extracted["content"]
