@@ -15,6 +15,7 @@ export const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
+  const [systemStats, setSystemStats] = useState<any>(null);
 
   const fetchTasks = async () => {
     try {
@@ -40,6 +41,8 @@ export const App: React.FC = () => {
   useEffect(() => {
     fetchTasks();
     api.getHealth().then(setHealth).catch(console.error);
+    api.getSystem().then(setSystemStats).catch(console.error);
+
 
     // Polling interval for live execution updates
     const interval = setInterval(() => {
@@ -181,6 +184,11 @@ export const App: React.FC = () => {
                   <div>● Voice: <strong style={{ color: health.elevenlabs_enabled ? 'var(--accent-green)' : 'var(--text-secondary)' }}>{health.elevenlabs_enabled ? 'ElevenLabs Active' : 'Offline'}</strong></div>
                   <div>● Tracing: <strong style={{ color: health.sentry_enabled ? 'var(--accent-green)' : 'var(--text-secondary)' }}>{health.sentry_enabled ? 'Sentry Active' : 'Offline'}</strong></div>
                   <div>● Vector RAG: <strong style={{ color: 'var(--accent-green)' }}>{health.qdrant_status}</strong></div>
+                  {systemStats && (
+                    <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid var(--border-color)', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                      💾 Disk: <strong>{systemStats.storage?.free_gb} GB free</strong> of {systemStats.storage?.total_gb} GB ({systemStats.os})
+                    </div>
+                  )}
                 </div>
               </div>
             )}

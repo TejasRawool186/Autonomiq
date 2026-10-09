@@ -76,4 +76,10 @@ export const api = {
     const res = await fetch(`${API_BASE}/models`);
     return res.json();
   },
+
+  async getSystem(): Promise<any> {
+    const res = await fetch(`${API_BASE}/system`);
+    return res.json();
+  },
 };
+
