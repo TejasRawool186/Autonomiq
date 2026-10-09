@@ -49,6 +49,13 @@ export const api = {
     return res.json();
   },
 
+  async deleteTask(id: string): Promise<{ status: string }> {
+    const res = await fetch(`${API_BASE}/tasks/${id}`, {
+      method: 'DELETE',
+    });
+    return res.json();
+  },
+
   async getTrace(id: string): Promise<any> {
     const res = await fetch(`${API_BASE}/tasks/${id}/trace`);
     return res.json();

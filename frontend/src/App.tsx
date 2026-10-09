@@ -121,9 +121,34 @@ export const App: React.FC = () => {
                       <span className={`badge badge-${t.status}`} style={{ fontSize: '10px' }}>
                         {t.status}
                       </span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                        {new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                          {new Date(t.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Delete task "${t.title}"?`)) {
+                              api.deleteTask(t.id).then(() => {
+                                if (selectedTask?.id === t.id) setSelectedTask(null);
+                                fetchTasks();
+                              });
+                            }
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: '11px',
+                            color: 'var(--text-muted)',
+                            padding: '0 2px'
+                          }}
+                          title="Delete task"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </div>
                     <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
                       {t.title}
