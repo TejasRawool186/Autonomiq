@@ -84,8 +84,8 @@ class QdrantVectorStore:
             self._memory_chunks[c["chunk_id"]] = c
         return len(chunks)
 
-    def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
-        """Semantic search returning top-k matching chunks with similarity scores."""
+    def search(self, query: str, top_k: int = 5, min_score: float = 0.0) -> List[Dict[str, Any]]:
+        """Semantic search returning top-k matching chunks with similarity scores above min_score."""
         if not self._memory_chunks:
             return []
 
@@ -96,14 +96,27 @@ class QdrantVectorStore:
             c_vec = chunk["vector"]
             # Cosine similarity
             dot = sum(a * b for a, b in zip(q_vec, c_vec))
-            scored.append({
-                "chunk_id": chunk_id,
-                "text": chunk["text"],
-                "source_id": chunk["source_id"],
-                "source_title": chunk["source_title"],
-                "source_url": chunk.get("source_url", ""),
-                "score": round(dot, 4),
-            })
+            if dot >= min_score:
+                scored.append({
+                    "chunk_id": chunk_id,
+                    "text": chunk["text"],
+                    "source_id": chunk["source_id"],
+                    "source_title": chunk["source_title"],
+                    "source_url": chunk.get("source_url", ""),
+                    "score": round(dot, 4),
+                })
 
         scored.sort(key=lambda x: x["score"], reverse=True)
         return scored[:top_k]
+
+    def clear(self, source_id: Optional[str] = None) -> int:
+        """Clear all chunks or chunks matching a specific source_id."""
+        if source_id is None:
+            count = len(self._memory_chunks)
+            self._memory_chunks.clear()
+            return count
+        to_delete = [cid for cid, c in self._memory_chunks.items() if c.get("source_id") == source_id]
+        for cid in to_delete:
+            del self._memory_chunks[cid]
+        return len(to_delete)
+
