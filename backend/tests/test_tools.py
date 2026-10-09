@@ -31,10 +31,11 @@ def test_html_scraping():
 
 
 async def async_test_search():
-    client = SerpApiClient(api_key=None)  # Tests mock fallback
-    results = await client.search("open-source AI models 2026", num_results=2)
-    assert len(results) == 2
-    assert "open-source AI models 2026" in results[0]["title"]
+    client = SerpApiClient()  # Uses real key from .env
+    results = await client.search("Google Gemma open models", num_results=2)
+    assert len(results) > 0
+    assert "url" in results[0]
+    assert results[0]["url"].startswith("http")
 
 
 def test_search():
@@ -44,4 +45,4 @@ def test_search():
 if __name__ == "__main__":
     test_html_scraping()
     test_search()
-    print("All tool tests passed!")
+    print("All tool tests passed with live SerpApi search!")
