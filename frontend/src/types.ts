@@ -60,3 +60,17 @@ export interface HealthStatus {
   sentry_enabled: boolean;
   elevenlabs_enabled: boolean;
 }
+
+export interface ModelInfo {
+  id: string;
+  name: string;
+  size_mb?: number | null;
+  is_default: boolean;
+  family: string;
+}
+
+export interface ModelsResponse {
+  default_model: string;
+  models: ModelInfo[];
+}
+

@@ -15,11 +15,17 @@ class OllamaClient:
     async def generate(self, prompt: str, system: Optional[str] = None) -> str:
         """Call Ollama /api/generate endpoint."""
         url = f"{self.base_url}/api/generate"
+        model_family = "Gemma" if "gemma" in self.model.lower() else "Qwen" if "qwen" in self.model.lower() else "Local AI"
+        default_system = f"You are Autonomiq, an autonomous research assistant powered by {model_family} ({self.model})."
+        
         payload = {
             "model": self.model,
             "prompt": prompt,
-            "system": system or "You are Autonomiq, an autonomous research assistant powered by Gemma.",
+            "system": system or default_system,
             "stream": False,
+            "options": {
+                "temperature": 0.2,
+            },
         }
 
         try:

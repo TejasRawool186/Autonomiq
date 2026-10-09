@@ -36,8 +36,9 @@ class Settings(BaseSettings):
 
     # Local AI (Ollama)
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "gemma2:9b"
+    OLLAMA_MODEL: str = "gemma3:1b"
     OLLAMA_EMBEDDING_MODEL: str = "nomic-embed-text"
+    SUPPORTED_MODELS: List[str] = ["gemma3:1b", "qwen2.5:1.5b", "qwen3:1.7b", "qwen3:4b"]
 
     # Integrations (Optional)
     SERPAPI_API_KEY: str = ""

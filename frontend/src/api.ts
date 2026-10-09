@@ -57,4 +57,9 @@ export const api = {
   getAudioUrl(id: string): string {
     return `${API_BASE}/tasks/${id}/audio`;
   },
+
+  async getModels(): Promise<import('./types').ModelsResponse> {
+    const res = await fetch(`${API_BASE}/models`);
+    return res.json();
+  },
 };

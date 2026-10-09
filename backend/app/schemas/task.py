@@ -13,7 +13,7 @@ class TaskCreate(BaseModel):
     title: str = Field(..., min_length=3, max_length=255, description="Brief task title")
     description: str = Field(..., min_length=5, description="Full research query or objective")
     task_type: str = Field(default="research", description="Task type: research, analysis, rag")
-    model_name: Optional[str] = Field(default="gemma2:9b")
+    model_name: Optional[str] = Field(default="gemma3:1b")
     source_urls: Optional[List[str]] = Field(default_factory=list, description="Initial reference URLs")
     auto_approve_plan: bool = Field(default=False, description="Start execution immediately after planning")
 

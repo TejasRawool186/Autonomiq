@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../api';
-import { Task } from '../types';
+import { Task, ModelInfo } from '../types';
 
 interface NewTaskModalProps {
   isOpen: boolean;
@@ -8,12 +8,37 @@ interface NewTaskModalProps {
   onTaskCreated: (task: Task) => void;
 }
 
+const FALLBACK_MODELS: ModelInfo[] = [
+  { id: 'gemma3:1b', name: 'gemma3:1b', size_mb: 815, is_default: true, family: 'gemma' },
+  { id: 'qwen2.5:1.5b', name: 'qwen2.5:1.5b', size_mb: 986, is_default: false, family: 'qwen' },
+  { id: 'qwen3:1.7b', name: 'qwen3:1.7b', size_mb: 1360, is_default: false, family: 'qwen' },
+  { id: 'qwen3:4b', name: 'qwen3:4b', size_mb: 2500, is_default: false, family: 'qwen' },
+];
+
 export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onTaskCreated }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [model, setModel] = useState('gemma2:9b');
+  const [model, setModel] = useState('gemma3:1b');
+  const [modelsList, setModelsList] = useState<ModelInfo[]>(FALLBACK_MODELS);
   const [autoApprove, setAutoApprove] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      api.getModels()
+        .then((res) => {
+          if (res?.models && res.models.length > 0) {
+            setModelsList(res.models);
+            if (res.default_model) {
+              setModel(res.default_model);
+            }
+          }
+        })
+        .catch(() => {
+          // Keep FALLBACK_MODELS
+        });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -83,7 +108,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onT
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your research question. Autonomiq will search the web, extract data, index in local Qdrant, and synthesize with Gemma."
+              placeholder="Describe your research question. Autonomiq will search the web, extract data, index in local Qdrant, and synthesize with your local model."
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -98,7 +123,7 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onT
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                Local LLM Model
+                Local Model (Detected in Ollama)
               </label>
               <select
                 value={model}
@@ -111,9 +136,11 @@ export const NewTaskModal: React.FC<NewTaskModalProps> = ({ isOpen, onClose, onT
                   fontSize: '14px'
                 }}
               >
-                <option value="gemma2:9b">Gemma 2 9B (Recommended)</option>
-                <option value="gemma:2b">Gemma 2B (Lightweight)</option>
-                <option value="gemma2:27b">Gemma 2 27B</option>
+                {modelsList.map((m) => (
+                  <option key={m.id} value={m.name}>
+                    {m.name} {m.size_mb ? `(${m.size_mb >= 1024 ? (m.size_mb / 1024).toFixed(1) + ' GB' : m.size_mb + ' MB'})` : ''} {m.name.includes('gemma') ? '⭐ Recommended' : ''}
+                  </option>
+                ))}
               </select>
             </div>
 

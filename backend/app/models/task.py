@@ -17,7 +17,7 @@ class Task(Base):
     description = Column(Text, nullable=False)
     task_type = Column(String(50), default="research", nullable=False)
     status = Column(String(50), default="created", nullable=False)  # created, planned, running, completed, failed, cancelled
-    model_name = Column(String(100), default="gemma2:9b", nullable=False)
+    model_name = Column(String(100), default="gemma3:1b", nullable=False)
     
     plan_json = Column(Text, nullable=True)
     plan_approved = Column(Boolean, default=False, nullable=False)
