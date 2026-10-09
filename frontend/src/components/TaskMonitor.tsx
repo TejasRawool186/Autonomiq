@@ -5,9 +5,10 @@ interface TaskMonitorProps {
   task: Task;
   onStartClick: () => void;
   onCancelClick: () => void;
+  onRetryClick?: () => void;
 }
 
-export const TaskMonitor: React.FC<TaskMonitorProps> = ({ task, onStartClick, onCancelClick }) => {
+export const TaskMonitor: React.FC<TaskMonitorProps> = ({ task, onStartClick, onCancelClick, onRetryClick }) => {
   const [elapsed, setElapsed] = React.useState(0);
   const steps = task.steps || [];
   const sources = task.sources || [];
@@ -47,6 +48,11 @@ export const TaskMonitor: React.FC<TaskMonitorProps> = ({ task, onStartClick, on
           {task.status === 'running' && (
             <button className="btn btn-secondary" onClick={onCancelClick} style={{ color: 'var(--status-error)' }}>
               Cancel Task
+            </button>
+          )}
+          {(task.status === 'failed' || task.status === 'cancelled' || task.status === 'completed') && onRetryClick && (
+            <button className="btn btn-secondary" onClick={onRetryClick} title="Re-run this task from start">
+              🔄 Re-run Task
             </button>
           )}
         </div>

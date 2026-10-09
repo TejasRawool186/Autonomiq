@@ -64,6 +64,13 @@ export const App: React.FC = () => {
     loadTaskDetails(selectedTask.id);
   };
 
+  const handleRetryTask = async () => {
+    if (!selectedTask) return;
+    await api.retryTask(selectedTask.id);
+    loadTaskDetails(selectedTask.id);
+    fetchTasks();
+  };
+
   return (
     <div>
       <Navbar
@@ -187,6 +194,7 @@ export const App: React.FC = () => {
                   task={selectedTask}
                   onStartClick={handleStartTask}
                   onCancelClick={handleCancelTask}
+                  onRetryClick={handleRetryTask}
                 />
 
                 {selectedTask.status === 'completed' && (

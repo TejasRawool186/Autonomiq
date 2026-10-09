@@ -56,6 +56,13 @@ export const api = {
     return res.json();
   },
 
+  async retryTask(id: string): Promise<{ status: string; message: string }> {
+    const res = await fetch(`${API_BASE}/tasks/${id}/retry`, {
+      method: 'POST',
+    });
+    return res.json();
+  },
+
   async getTrace(id: string): Promise<any> {
     const res = await fetch(`${API_BASE}/tasks/${id}/trace`);
     return res.json();
