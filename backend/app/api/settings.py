@@ -47,22 +47,12 @@ async def list_available_models():
                         "is_default": (name == settings.OLLAMA_MODEL),
                         "family": "gemma" if "gemma" in name.lower() else "qwen" if "qwen" in name.lower() else "other",
                     })
-    except Exception:
-        pass
-
-    # If Ollama didn't return any, use supported models
-    if not detected_models:
-        for m in settings.SUPPORTED_MODELS:
-            detected_models.append({
-                "id": m,
-                "name": m,
-                "size_mb": None,
-                "is_default": (m == settings.OLLAMA_MODEL),
-                "family": "gemma" if "gemma" in m.lower() else "qwen" if "qwen" in m.lower() else "other",
-            })
+    except Exception as e:
+        print(f"[Ollama Tags Error] {e}")
 
     return {
         "default_model": settings.OLLAMA_MODEL,
         "models": detected_models,
     }
+
 
