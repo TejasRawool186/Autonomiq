@@ -1,8 +1,9 @@
 """Direct Background Workflow Runner.
-Executes tasks asynchronously in the background, updating database records per step.
-Allows Autonomiq to function seamlessly in both standalone and Temporal modes.
+Executes tasks asynchronously in the background, updating database records per step
+and emitting live telemetry to Sentry.
 """
 
+import time
 import asyncio
 from datetime import datetime
 from typing import Dict, Any
@@ -13,10 +14,11 @@ from backend.app.models.step import Step
 from backend.app.models.source import Source
 from backend.app.models.artifact import Artifact
 from backend.app.workflows.temporal_activities import ResearchActivities
+from backend.app.tools.tracing import AgentTracer
 
 
 async def run_task_background(task_id: str, objective: str, model_name: str):
-    """Executes research task stages, persisting step updates to the SQLite database."""
+    """Executes research task stages, persisting step updates to the SQLite database and tracing via Sentry."""
     state = {
         "task_id": task_id,
         "objective": objective,
@@ -53,6 +55,8 @@ async def run_task_background(task_id: str, objective: str, model_name: str):
 
     for step_name, activity_fn in stages:
         step_id = f"{task_id}_{step_name}"
+        step_start_time = time.time()
+
         async with AsyncSessionLocal() as session:
             # Create or update step
             step = Step(
@@ -68,6 +72,16 @@ async def run_task_background(task_id: str, objective: str, model_name: str):
         try:
             output = await activity_fn(state)
             state.update(output)
+            duration_ms = (time.time() - step_start_time) * 1000
+
+            # Record span & Sentry telemetry
+            AgentTracer.record_span(
+                task_id=task_id,
+                step_name=step_name,
+                duration_ms=duration_ms,
+                model=model_name,
+                status="success",
+            )
 
             async with AsyncSessionLocal() as session:
                 step_q = await session.execute(select(Step).where(Step.id == step_id))
@@ -78,6 +92,16 @@ async def run_task_background(task_id: str, objective: str, model_name: str):
                 await session.commit()
 
         except Exception as e:
+            duration_ms = (time.time() - step_start_time) * 1000
+            AgentTracer.record_span(
+                task_id=task_id,
+                step_name=step_name,
+                duration_ms=duration_ms,
+                model=model_name,
+                status="failed",
+                metadata={"error": str(e)},
+            )
+
             async with AsyncSessionLocal() as session:
                 step_q = await session.execute(select(Step).where(Step.id == step_id))
                 step_obj = step_q.scalar_one_or_none()
