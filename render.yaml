@@ -1,0 +1,32 @@
+# Render Blueprint for Autonomiq (FR-13)
+# Deploys FastAPI backend service and React static site
+
+services:
+  # FastAPI Backend Service
+  - type: web
+    name: autonomiq-api
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./data/sqlite/autonomiq.db
+      - key: LOG_LEVEL
+        value: INFO
+      - key: OLLAMA_BASE_URL
+        value: http://localhost:11434
+      - key: OLLAMA_MODEL
+        value: gemma2:9b
+
+  # React Frontend Static Site
+  - type: web
+    name: autonomiq-web
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
