@@ -12,12 +12,12 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ task }) => {
 
   const handleCopyReport = () => {
     const reportArtifact = artifacts.find((a) => a.file_type === 'report_markdown');
-    if (task.description) {
-      navigator.clipboard.writeText(`# ${task.title}\n\n${task.description}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    const content = reportArtifact ? `# ${task.title} [${reportArtifact.file_name}]\n\n${task.description}` : `# ${task.title}\n\n${task.description}`;
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
+
 
   const exportJSON = () => {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(task, null, 2));
