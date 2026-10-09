@@ -52,25 +52,46 @@ Autonomiq/
 ## 🚀 Phased Implementation Roadmap
 
 - [x] **Phase 0: Architecture Analysis & Project Scaffolding** (Folder structure, configs, verification scripts)
-- [ ] **Phase 1: Backend Foundation & Storage Layer** (FastAPI app, SQLite database models, schemas, task CRUD)
-- [ ] **Phase 2: Document Processing & Local Vector RAG** (PDF/TXT/MD parsers, chunking, Qdrant local vector store)
-- [ ] **Phase 3: Autonomous Agent Workflow (LangGraph)** (Modular nodes: Planner, Researcher, Extractor, Analyst, Reporter)
-- [ ] **Phase 4: Durable Execution & Observability** (Temporal worker + Sentry tracing)
-- [ ] **Phase 5: Audio Digest & Report Generation** (ElevenLabs synthesis & Markdown report export)
-- [ ] **Phase 6: Frontend UI (React + Vite + Away Mode)** (Modern light-theme dashboard, task monitor, player)
-- [ ] **Phase 7: End-to-End Verification & Production Readiness** (Full multi-source research run, docs, deployment configs)
+- [x] **Phase 1: Backend Foundation & Storage Layer** (FastAPI app, SQLite database models, schemas, task CRUD)
+- [x] **Phase 2: Document Processing & Local Vector RAG** (PDF/TXT/MD parsers, chunking, Qdrant local vector store)
+- [x] **Phase 3: Autonomous Agent Workflow (LangGraph)** (Modular nodes: Planner, Researcher, Extractor, Analyst, Reporter)
+- [x] **Phase 4: Durable Execution & Observability** (Temporal worker + Sentry tracing)
+- [x] **Phase 5: Audio Digest & Report Generation** (ElevenLabs synthesis & Markdown report export)
+- [x] **Phase 6: Frontend UI (React + Vite + Away Mode)** (Modern light-theme dashboard, task monitor, player)
+- [x] **Phase 7: End-to-End Verification & Production Readiness** (Full multi-source research run, docs, deployment configs)
+- [x] **Phase 8: Live Partner Integrations & Mock Elimination** (Grounded SerpApi, ElevenLabs v2 voice, Sentry spans, dynamic Ollama models)
 
 ---
 
-## 🛠️ Quick Start
+## 🛠️ Quick Start & Running
 
-### 1. Verify Setup
-```bash
-python scripts/verify_setup.py
-```
-
-### 2. Configure Environment
+### 1. Configure Environment (`.env`)
 ```bash
 cp .env.example .env
 ```
-Update your `.env` with API keys (SerpApi, ElevenLabs, Sentry) as needed.
+Populate your live API keys:
+- `SERPAPI_API_KEY`: Real-time Google search indexing.
+- `ELEVENLABS_API_KEY`: Multilingual v2 audio synthesis.
+- `SENTRY_DSN`: Real-time distributed tracing and telemetry.
+- `OLLAMA_MODEL`: Target model (e.g. `gemma3:1b`, `qwen2.5:1.5b`, `qwen3:4b`).
+
+### 2. Start Backend
+```bash
+python scripts/run_backend.py
+```
+FastAPI runs on `http://localhost:8000` (Docs: `http://localhost:8000/docs`).
+
+### 3. Start Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open `http://localhost:5173` in your browser.
+
+### 4. Shortcuts & Features
+- **Ctrl+N / Ctrl+K**: Open New Research Task modal.
+- **Away Mode**: Submit any task, approve the plan, and safely close the tab or browser.
+- **Audio Digest**: Listen with custom playback speeds (1x, 1.25x, 1.5x) or download the MP3.
+- **Task Retry**: Re-run any past research task with fresh background execution.
+
