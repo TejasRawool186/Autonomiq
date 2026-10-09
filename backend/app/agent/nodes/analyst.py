@@ -8,7 +8,7 @@ from backend.app.agent.llm import OllamaClient
 
 
 async def analyst_node(state: AgentState) -> Dict[str, Any]:
-    """Synthesizes evidence using Gemma local LLM."""
+    """Synthesizes evidence using Gemma local LLM with prompt token budgeting."""
     client = OllamaClient(model=state.get("model_name"))
     chunks = state.get("retrieved_chunks", [])
 
@@ -30,9 +30,19 @@ Perform a rigorous, objective synthesis:
 4. Limitations
 Provide clear, grounded analysis without making up unsupported claims.
 """
+    # Estimate prompt token count (approx 4 chars per token)
+    est_prompt_tokens = max(1, len(prompt) // 4)
+
     analysis = await client.generate(prompt)
+    est_completion_tokens = max(1, len(analysis) // 4)
 
     return {
         "analysis": analysis,
         "current_step": "analysis_completed",
+        "tokens_used": {
+            "prompt_tokens_est": est_prompt_tokens,
+            "completion_tokens_est": est_completion_tokens,
+            "total_tokens_est": est_prompt_tokens + est_completion_tokens,
+        },
     }
+
