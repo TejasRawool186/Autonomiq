@@ -44,6 +44,15 @@ export const App: React.FC = () => {
     api.getSystem().then(setSystemStats).catch(console.error);
 
 
+    // Keyboard shortcut (Ctrl+N or Ctrl+K) to open New Task modal
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'n' || e.key === 'k')) {
+        e.preventDefault();
+        setIsModalOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     // Polling interval for live execution updates
     const interval = setInterval(() => {
       fetchTasks();
@@ -52,8 +61,12 @@ export const App: React.FC = () => {
       }
     }, 3000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [selectedTask?.id, selectedTask?.status]);
+
 
   const handleStartTask = async () => {
     if (!selectedTask) return;
