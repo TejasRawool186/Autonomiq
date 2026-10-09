@@ -16,10 +16,15 @@ async def reporter_node(state: AgentState) -> Dict[str, Any]:
     analysis = state.get("analysis", "No detailed analysis generated.")
 
     sources_md = ""
+    table_rows = []
     for idx, s in enumerate(sources, 1):
         url = s.get("url", "N/A")
         title_str = s.get("title", f"Source {idx}")
+        snippet_short = (s.get('snippet') or "N/A").replace("\n", " ")[:90]
         sources_md += f"{idx}. **[{title_str}]({url})** — {s.get('snippet', 'No snippet available.')}\n"
+        table_rows.append(f"| {idx} | [{title_str[:35]}]({url}) | {s.get('source', 'Web')} | {snippet_short}... |")
+
+    table_md = "\n".join(table_rows) if table_rows else "| - | No sources | - | - |"
 
     report_markdown = f"""# Autonomous Research Report: {title}
 
@@ -45,6 +50,11 @@ The autonomous pipeline completed:
 4. Semantic chunking and vector indexing in local Qdrant.
 5. Local synthesis via Gemma ({state.get('model_name', 'gemma2:9b')}).
 
+### Evidence Sources Matrix
+| # | Source Title | Engine | Snippet Preview |
+|---|--------------|--------|-----------------|
+{table_md}
+
 ---
 
 ## 3. Detailed Findings & Synthesis
@@ -56,6 +66,7 @@ The autonomous pipeline completed:
 ## 4. Source References & Citations
 
 {sources_md if sources_md else "No external sources recorded."}
+
 
 ---
 
