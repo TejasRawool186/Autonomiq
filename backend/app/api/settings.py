@@ -56,3 +56,40 @@ async def list_available_models():
     }
 
 
+import os
+import shutil
+import platform
+import sys
+
+
+
+@router.get("/system")
+async def get_system_stats():
+    """Returns local system resources and storage usage metrics."""
+    data_path = settings.DATA_DIR
+    total_gb = 0.0
+    free_gb = 0.0
+    used_gb = 0.0
+    try:
+        total, used, free = shutil.disk_usage(data_path)
+        total_gb = round(total / (1024**3), 2)
+        used_gb = round(used / (1024**3), 2)
+        free_gb = round(free / (1024**3), 2)
+    except Exception:
+        pass
+
+    return {
+        "os": platform.system(),
+        "platform_release": platform.release(),
+        "python_version": sys.version.split()[0],
+        "cpu_count": os.cpu_count() or 1,
+        "storage": {
+            "total_gb": total_gb,
+            "used_gb": used_gb,
+            "free_gb": free_gb,
+            "data_path": str(data_path),
+        },
+    }
+
+
+
