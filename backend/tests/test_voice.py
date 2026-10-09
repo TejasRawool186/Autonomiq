@@ -12,10 +12,10 @@ from backend.app.tools.elevenlabs_voice import ElevenLabsVoiceEngine
 
 
 async def async_test_voice():
-    engine = ElevenLabsVoiceEngine(api_key=None)  # Tests fallback generation
+    engine = ElevenLabsVoiceEngine()  # Uses real key from .env
     path, checksum, size = await engine.generate_audio_digest(
         task_id="test_voice_task",
-        summary_text="Welcome back. Your research on open-source AI models is ready.",
+        summary_text="Welcome back. Autonomiq research complete.",
     )
 
     assert path.exists()
@@ -23,9 +23,12 @@ async def async_test_voice():
     assert len(checksum) == 64
     assert path.name == "digest.mp3"
 
-    # Cleanup
-    path.unlink()
-    path.parent.rmdir()
+    # Cleanup test artifact
+    path.unlink(missing_ok=True)
+    try:
+        path.parent.rmdir()
+    except Exception:
+        pass
 
 
 def test_voice():
@@ -34,4 +37,4 @@ def test_voice():
 
 if __name__ == "__main__":
     test_voice()
-    print("Voice test passed!")
+    print("ElevenLabs real voice test passed!")
