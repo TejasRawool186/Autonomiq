@@ -129,6 +129,17 @@ async def cancel_task(task_id: str, db: AsyncSession = Depends(get_db)):
     return {"status": "cancelled", "task_id": task_id}
 
 
+@router.delete("/tasks/{task_id}")
+async def delete_task(task_id: str, db: AsyncSession = Depends(get_db)):
+    """Delete a task and its stored artifacts."""
+    task = await db.get(Task, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    await db.delete(task)
+    await db.commit()
+    return {"status": "deleted", "task_id": task_id}
+
+
 @router.get("/tasks/{task_id}/trace")
 async def get_task_trace(task_id: str):
     """Retrieve Sentry trace telemetry summary for the task."""
