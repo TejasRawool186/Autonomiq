@@ -168,3 +168,27 @@ async def get_task_audio(task_id: str, db: AsyncSession = Depends(get_db)):
     if not artifact or not Path(artifact.file_path).exists():
         raise HTTPException(status_code=404, detail="Audio digest not found for this task")
     return FileResponse(artifact.file_path, media_type="audio/mpeg", filename=artifact.file_name)
+
+
+@router.get("/tasks/{task_id}/report")
+async def get_task_report(task_id: str, db: AsyncSession = Depends(get_db)):
+    """Download the generated markdown research report."""
+    query = select(Artifact).where(Artifact.task_id == task_id, Artifact.file_type == "report_markdown")
+    res = await db.execute(query)
+    artifact = res.scalar_one_or_none()
+    if not artifact or not Path(artifact.file_path).exists():
+        raise HTTPException(status_code=404, detail="Report artifact not found for this task")
+    return FileResponse(artifact.file_path, media_type="text/markdown", filename="report.md")
+
+
+@router.get("/tasks/{task_id}/artifacts/{artifact_id}/download")
+async def download_task_artifact(task_id: str, artifact_id: str, db: AsyncSession = Depends(get_db)):
+    """Download any stored artifact by ID."""
+    query = select(Artifact).where(Artifact.task_id == task_id, Artifact.id == artifact_id)
+    res = await db.execute(query)
+    artifact = res.scalar_one_or_none()
+    if not artifact or not Path(artifact.file_path).exists():
+        raise HTTPException(status_code=404, detail="Artifact not found")
+    media_type = "audio/mpeg" if artifact.file_type == "audio_mp3" else "text/markdown" if artifact.file_type == "report_markdown" else "application/octet-stream"
+    return FileResponse(artifact.file_path, media_type=media_type, filename=artifact.file_name)
+

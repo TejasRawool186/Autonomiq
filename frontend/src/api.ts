@@ -72,6 +72,14 @@ export const api = {
     return `${API_BASE}/tasks/${id}/audio`;
   },
 
+  getReportUrl(id: string): string {
+    return `${API_BASE}/tasks/${id}/report`;
+  },
+
+  getArtifactDownloadUrl(taskId: string, artifactId: string): string {
+    return `${API_BASE}/tasks/${taskId}/artifacts/${artifactId}/download`;
+  },
+
   async getModels(): Promise<import('./types').ModelsResponse> {
     const res = await fetch(`${API_BASE}/models`);
     return res.json();
