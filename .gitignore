@@ -23,6 +23,7 @@ data/qdrant/*
 data/uploads/*
 data/artifacts/*
 !data/**/.gitkeep
+backend/data/
 
 # Node / Frontend
 node_modules/
