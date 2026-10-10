@@ -27,12 +27,13 @@ You MUST respond ONLY with a raw JSON object (no markdown, no extra commentary):
     {{"step_number": 6, "name": "Voice", "description": "Synthesize ElevenLabs audio digest", "tool": "elevenlabs"}}
   ],
   "estimated_duration_seconds": 60,
-  "safety_constraints": ["Ensure source URLs are verified", "Ground claims strictly in scraped evidence"]
 }}
 """
-    raw = await client.generate(prompt)
-    
-    # Extract JSON block
+    raw = ""
+    try:
+        raw = await client.generate(prompt)
+    except Exception as e:
+        print(f"[Planner Notice] Ollama generation unavailable ({e}), using default structured research plan.")
     plan = None
     try:
         json_match = re.search(r"\{[\s\S]*\}", raw)
@@ -57,10 +58,13 @@ You MUST respond ONLY with a raw JSON object (no markdown, no extra commentary):
             "safety_constraints": ["Ground claims strictly in retrieved sources"],
         }
 
-    # Generate search queries dynamically from objective
+    # Clean and extract concise, high-signal search queries
+    clean_obj = " ".join((state.get("objective") or "").split())
+    first_sentence = clean_obj.split(".")[0].strip()
+    primary_query = first_sentence if len(first_sentence) <= 100 else clean_obj[:100]
     queries = [
-        state["objective"],
-        f"{state['objective']} latest benchmarks documentation",
+        primary_query,
+        f"{primary_query} overview benchmarks documentation",
     ]
 
     return {

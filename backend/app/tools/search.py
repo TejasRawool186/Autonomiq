@@ -41,7 +41,8 @@ class SerpApiClient:
                 if attempt < max_retries:
                     await asyncio.sleep(1.0 * (attempt + 1))
                 else:
-                    raise RuntimeError(f"SerpApi query failed after {max_retries + 1} attempts: {last_error}")
+                    err_msg = str(exc) if str(exc) else repr(exc)
+                    raise RuntimeError(f"SerpApi query failed after {max_retries + 1} attempts: {err_msg}")
 
         results = []
         for item in data.get("organic_results", [])[:num_results]:

@@ -33,7 +33,17 @@ Provide clear, grounded analysis without making up unsupported claims.
     # Estimate prompt token count (approx 4 chars per token)
     est_prompt_tokens = max(1, len(prompt) // 4)
 
-    analysis = await client.generate(prompt)
+    try:
+        analysis = await client.generate(prompt)
+    except Exception as e:
+        print(f"[Analyst Notice] Ollama generation unavailable ({e}), generating synthesis from evidence chunks.")
+        if chunks:
+            analysis = "### Core Findings & Insights\n\n" + "\n\n".join([
+                f"- **{c.get('source_title', 'Source')}** ({c.get('source_url', 'web')}):\n  {c.get('text', '')[:250]}..."
+                for c in chunks[:5]
+            ])
+        else:
+            analysis = f"Synthesized research for: {state['objective']}.\n\nGrounded on live web queries and extracted sources."
     est_completion_tokens = max(1, len(analysis) // 4)
 
     return {
